@@ -2,8 +2,8 @@
 /**
  * The model for radar scan and accumulator
  * 
- * @author @gcschmit
- * @version 19 July 2014
+ * @author @kgmaxson
+ * @version 12 December 2014
  */
 public class Radar
 {
@@ -13,16 +13,24 @@ public class Radar
     
     // value of each cell is incremented for each scan in which that cell triggers detection 
     private int[][] accumulator;
+    private int[][] updatedAccumulator = new int[11][11];
     
     // location of the monster
     private int monsterLocationRow;
     private int monsterLocationCol;
+    
+    // speed of the monster
+    private int dx;
+    private int dy;
 
     // probability that a cell will trigger a false detection (must be >= 0 and < 1)
     private double noiseFraction;
     
     // number of scans of the radar since construction
     private int numScans;
+    
+    private boolean[][] pastScan = new boolean [100][100];
+
 
     /**
      * Constructor for objects of class Radar
@@ -30,18 +38,18 @@ public class Radar
      * @param   rows    the number of rows in the radar grid
      * @param   cols    the number of columns in the radar grid
      */
-    public Radar(int rows, int cols)
+    public Radar(int rows, int cols, int monsterLocationRow, int monsterLocationCol)
     {
         // initialize instance variables
         currentScan = new boolean[rows][cols]; // elements will be set to false
         accumulator = new int[rows][cols]; // elements will be set to 0
         
-        // randomly set the location of the monster (can be explicity set through the
-        //  setMonsterLocation method
-        monsterLocationRow = (int)(Math.random() * rows);
-        monsterLocationCol = (int)(Math.random() * cols);
+        // sets the location and speed of the monster
+        this.monsterLocationRow = monsterLocationRow;
+        this.monsterLocationCol = monsterLocationCol;
+
         
-        noiseFraction = 0.05;
+        noiseFraction = 0.01;
         numScans= 0;
     }
     
@@ -49,8 +57,17 @@ public class Radar
      * Performs a scan of the radar. Noise is injected into the grid and the accumulator is updated.
      * 
      */
-    public void scan()
+    public void scan(int dx, int dy)
     {
+        //store last scan
+        for(int row = 0; row < currentScan.length; row++)
+        {
+            for(int col = 0; col < currentScan[0].length; col++)
+            {
+                pastScan[row][col] = currentScan[row][col];
+            }
+        }
+        
         // zero the current scan grid
         for(int row = 0; row < currentScan.length; row++)
         {
@@ -60,20 +77,45 @@ public class Radar
             }
         }
         
-        // detect the monster
-        currentScan[monsterLocationRow][monsterLocationCol] = true;
+        // detect the monster, checks to see if range is out of the screen
+        if (monsterLocationRow+dy<0)
+        {
+            monsterLocationRow+=100;
+        }
+        if (monsterLocationRow+dy>=100)
+        {
+            monsterLocationRow-=100;
+        }
+        if (monsterLocationCol+dx<0)
+        {
+            monsterLocationCol+=100;
+        }
+        if (monsterLocationCol+dx>=100)
+        {
+            monsterLocationCol-=100;
+        }
+        currentScan[monsterLocationRow+dy][monsterLocationCol+dx] = true;
         
         // inject noise into the grid
         injectNoise();
         
-        // udpate the accumulator
-        for(int row = 0; row < currentScan.length; row++)
+        // update the accumulator
+        for(int row = 5; row < currentScan.length-5; row++)
         {
-            for(int col = 0; col < currentScan[0].length; col++)
+            for(int col = 5; col < currentScan[0].length-5; col++)
             {
-                if(currentScan[row][col] == true)
+                if(pastScan[row][col])
                 {
-                   accumulator[row][col]++;
+                   for (int i = -5; i<=5;i++)
+                   {
+                       for (int j=-5; j<=5;j++)
+                       {
+                           if (currentScan[row+i][col+j])
+                           {
+                               updatedAccumulator[i+5][j+5]++;
+                           }
+                       }
+                   }
                 }
             }
         }
@@ -185,4 +227,33 @@ public class Radar
         }
     }
     
+    /**
+     * Returns the velocity
+     * 
+     * @return the velocity
+     */
+    public int[] getVelocity()
+    {
+        int max = 0;
+        int[] location = new int[2];
+        int dyf=0;
+        int dxf=0;
+        for(int row = 0; row < 11; row++)
+        {
+            for(int col = 0; col < 11; col++)
+            {
+               System.out.println(row+" "+col+" "+updatedAccumulator[row][col]);
+                if (updatedAccumulator[row][col] > max)
+               {                
+                   max = updatedAccumulator[row][col];
+                   location[0]=row-5;
+                   location[1]=col-5;
+               }
+            }
+        }
+        int[] velocity = new int[2];
+        velocity[0]=location[1];
+        velocity[1]=location[0];
+        return velocity; 
+    }
 }
