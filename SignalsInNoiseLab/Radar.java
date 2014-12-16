@@ -99,7 +99,8 @@ public class Radar
         // inject noise into the grid
         injectNoise();
         
-        // update the accumulator
+        // update the accumulator by iterating through inside 90x90 grid in past scan and searching for live
+        //squares in 5x5 around it in the current scan
         for(int row = 5; row < currentScan.length-5; row++)
         {
             for(int col = 5; col < currentScan[0].length-5; col++)
@@ -234,6 +235,7 @@ public class Radar
      */
     public int[] getVelocity()
     {
+        //searches through the accumulator for the most commmon dx/dy pair and returns that velocity
         int max = 0;
         int[] location = new int[2];
         int dyf=0;
@@ -242,7 +244,6 @@ public class Radar
         {
             for(int col = 0; col < 11; col++)
             {
-               System.out.println(row+" "+col+" "+updatedAccumulator[row][col]);
                 if (updatedAccumulator[row][col] > max)
                {                
                    max = updatedAccumulator[row][col];

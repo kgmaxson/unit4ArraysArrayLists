@@ -20,7 +20,7 @@ public class RadarViewer
         final int DX = dx;
         final int DY = dy;
         Radar radar = new Radar(ROWS, COLS, rowM,colM);
-        radar.setNoiseFraction(0.01);
+        radar.setNoiseFraction(0.005);
         radar.scan(DX,DY);
         
         JFrame frame = new JFrame();
@@ -39,7 +39,7 @@ public class RadarViewer
         //  component.
         frame.setVisible(true);
         
-        // perform 100 scans of the radar wiht a slight pause between each
+        // perform 30 scans of the radar with a slight pause between each
         // after each scan, instruct the Java Run-Time to redraw the window
         for(int i = 0; i < 30; i++)
         {
